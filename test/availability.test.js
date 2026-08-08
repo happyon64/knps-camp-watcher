@@ -3,37 +3,39 @@ import assert from "node:assert/strict";
 import { findConsecutiveAvailability, parseFacilityRows } from "../src/availability.js";
 
 const target = {
-  categories: ["카라반", "특화야영장"],
+  categories: ["\uce74\ub77c\ubc18", "\ud2b9\ud654\uc57c\uc601\uc7a5"],
   nights: ["2026-09-04", "2026-09-05"]
 };
 
-test("같은 시설이 이틀 모두 예약 가능할 때만 일치한다", () => {
+test("same facility must be available on both nights", () => {
   const rows = [
     {
-      labels: ["카라반", "1호(6인)"],
+      labels: ["\uce74\ub77c\ubc18", "1\ud638"],
       states: [
-        { title: "1호(6인) : 2026-09-04", className: "icon-reservation 20260904_N" },
-        { title: "1호(6인) : 2026-09-05", className: "icon-reservation 20260905_N" }
+        { title: "1\ud638 : 2026-09-04", className: "icon-reservation 20260904_N" },
+        { title: "1\ud638 : 2026-09-05", className: "icon-reservation 20260905_N" }
       ]
     },
     {
-      labels: ["2호(6인)"],
+      labels: ["2\ud638"],
       states: [
-        { title: "2호(6인) : 2026-09-04", className: "icon-reservation 20260904_N" },
-        { title: "2호(6인) : 2026-09-05", className: "icon-none-reservation 20260905_C" }
+        { title: "2\ud638 : 2026-09-04", className: "icon-reservation 20260904_N" },
+        { title: "2\ud638 : 2026-09-05", className: "icon-none-reservation 20260905_C" }
       ]
     }
   ];
   const result = findConsecutiveAvailability(parseFacilityRows(rows), target);
   assert.equal(result.scheduleOpen, true);
-  assert.deepEqual(result.matches.map((item) => item.name), ["1호(6인)"]);
+  assert.deepEqual(result.matches.map((item) => item.name), ["1\ud638"]);
 });
 
-test("목표 날짜가 없으면 일정 미공개로 판정한다", () => {
-  const rows = [{
-    labels: ["특화야영장", "하우스-1(4인)"],
-    states: [{ title: "하우스-1(4인) : 2026-08-31", className: "icon-reservation" }]
-  }];
+test("missing target dates means schedule is not open", () => {
+  const rows = [
+    {
+      labels: ["\ud2b9\ud654\uc57c\uc601\uc7a5", "\ud558\uc6b0\uc2a4-1(4\uc778)"],
+      states: [{ title: "\ud558\uc6b0\uc2a4-1(4\uc778) : 2026-08-31", className: "icon-reservation" }]
+    }
+  ];
   const result = findConsecutiveAvailability(parseFacilityRows(rows), target);
   assert.equal(result.scheduleOpen, false);
   assert.deepEqual(result.matches, []);
