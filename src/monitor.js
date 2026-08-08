@@ -8,7 +8,6 @@ let timer;
 let activeRun;
 
 async function scrape() {
-  // 무료 512MB급 컨테이너에서도 유휴 메모리를 쓰지 않도록 매 확인 후 브라우저를 종료한다.
   const instance = await chromium.launch({
     headless: config.headless,
     args: ["--disable-dev-shm-usage", "--no-sandbox"]
@@ -21,26 +20,29 @@ async function scrape() {
   });
   const page = await context.newPage();
   try {
-    await page.goto(config.reservationUrl, { waitUntil: "domcontentloaded", timeout: 90_000 });
-    await page.getByText(config.target.park, { exact: false }).first().click();
-    await page.getByText(config.target.campground, { exact: true }).click();
-    await page.getByText(`${config.target.campground} 야영장 예약현황`, { exact: false }).waitFor({
+    await page.goto(config.reservationUrl, {
+      waitUntil: "domcontentloaded",
+      timeout: 90_000
+    });
+    await page.getByRole("link", { name: new RegExp(config.target.park) }).click();
+    await page.getByRole("link", { name: config.target.campground, exact: true }).click();
+    await page.locator("table").filter({ hasText: "\uc2dc\uc124 \uc608\uc57d \ud604\ud669" }).waitFor({
       timeout: 30_000
     });
 
     return await page.evaluate(() => {
       const tables = [...document.querySelectorAll("table")];
       const nameTable = tables.find((table) =>
-        table.querySelector("caption")?.innerText.includes("시설명 및 영지 명")
+        table.querySelector("caption")?.innerText.includes("\uc2dc\uc124\uba85 \ubc0f \uc601\uc9c0 \uba85")
       );
       const statusTable = tables.find((table) =>
-        table.querySelector("caption")?.innerText.includes("시설 예약 현황")
+        table.querySelector("caption")?.innerText.includes("\uc2dc\uc124 \uc608\uc57d \ud604\ud669")
       );
-      if (!nameTable || !statusTable) throw new Error("예약현황 표를 찾지 못했습니다.");
+      if (!nameTable || !statusTable) throw new Error("Reservation tables were not found");
       const nameRows = [...nameTable.rows];
       const statusRows = [...statusTable.rows].slice(-nameRows.length);
       return nameRows.map((row, index) => ({
-        labels: [...row.querySelectorAll("th")].map((cell) => cell.innerText),
+        labels: [...row.querySelectorAll("th,td")].map((cell) => cell.innerText),
         states: [...statusRows[index].querySelectorAll("i")].map((icon) => ({
           title: icon.title,
           className: icon.className
@@ -54,14 +56,14 @@ async function scrape() {
 }
 
 function availabilityMessage(matches) {
-  const list = matches.map((item) => `• ${item.category} ${item.name}`).join("\n");
+  const list = matches.map((item) => `- ${item.category} ${item.name}`).join("\n");
   return [
-    "🏕 구룡야영장 2박 연속 빈자리 발견!",
+    "[\uad6c\ub8e1\uc57c\uc601\uc7a5] 2\ubc15 \uc5f0\uc18d \ube48\uc790\ub9ac \ubc1c\uacac!",
     "",
-    "일정: 2026년 9월 4일 → 9월 6일 (2박)",
+    "\uc77c\uc815: 2026\ub144 9\uc6d4 4\uc77c ~ 9\uc6d4 6\uc77c (2\ubc15)",
     list,
     "",
-    "아래 버튼을 눌러 로그인 후 즉시 예약하세요."
+    "\uc544\ub798 \ubc84\ud2bc\uc744 \ub20c\ub7ec \uacf5\uc2dd \uc608\uc57d \ud398\uc774\uc9c0\uc5d0\uc11c \uc9c1\uc811 \uc608\uc57d\ud558\uc138\uc694."
   ].join("\n");
 }
 
@@ -75,11 +77,6 @@ async function performRun() {
     const notificationKey = matchingFacilities.slice().sort().join("|");
     const previous = getState().monitor;
 
-    if (result.scheduleOpen && !previous.scheduleOpen && getState().kakao) {
-      await sendKakaoMessage(
-        "📅 구룡야영장 2026년 9월 일정이 예약 화면에 공개되었습니다.\n9월 4~6일 빈자리를 계속 감시합니다."
-      );
-    }
     if (matchingFacilities.length && notificationKey !== previous.lastNotificationKey) {
       await sendKakaoMessage(availabilityMessage(result.matches));
     }
@@ -91,9 +88,7 @@ async function performRun() {
         lastError: null,
         scheduleOpen: result.scheduleOpen,
         matchingFacilities,
-        lastNotificationKey: matchingFacilities.length
-          ? notificationKey
-          : null
+        lastNotificationKey: matchingFacilities.length ? notificationKey : null
       }
     });
     return result;
@@ -116,8 +111,9 @@ function scheduleNext() {
     ? config.intervalOpenMs
     : config.intervalUnopenedMs;
   const delay = base + Math.floor(Math.random() * config.jitterMs);
-  const nextCheckAt = new Date(Date.now() + delay).toISOString();
-  patchState({ monitor: { nextCheckAt } }).catch(console.error);
+  patchState({ monitor: { nextCheckAt: new Date(Date.now() + delay).toISOString() } }).catch(
+    console.error
+  );
   timer = setTimeout(async () => {
     try {
       await runNow();

@@ -3,9 +3,7 @@ import "dotenv/config";
 
 const numberEnv = (name, fallback) => {
   const value = Number(process.env[name] ?? fallback);
-  if (!Number.isFinite(value) || value <= 0) {
-    throw new Error(`${name} must be a positive number`);
-  }
+  if (!Number.isFinite(value) || value <= 0) throw new Error(`${name} must be positive`);
   return value;
 };
 
@@ -16,8 +14,9 @@ export const config = {
   dashboardPassword: process.env.DASHBOARD_PASSWORD ?? "",
   kakaoRestApiKey: process.env.KAKAO_REST_API_KEY ?? "",
   kakaoClientSecret: process.env.KAKAO_CLIENT_SECRET ?? "",
+  kakaoRefreshToken: process.env.KAKAO_REFRESH_TOKEN ?? "",
   kakaoRedirectUri:
-    process.env.KAKAO_REDIRECT_URI ?? "http://localhost:3000/oauth/kakao/callback",
+    process.env.KAKAO_REDIRECT_URI ?? "http://localhost:3765/oauth/kakao/callback",
   dataDir: path.resolve(process.env.DATA_DIR ?? "./data"),
   headless: (process.env.HEADLESS ?? "true").toLowerCase() !== "false",
   intervalUnopenedMs: numberEnv("INTERVAL_UNOPENED_SECONDS", 900) * 1000,
@@ -26,23 +25,18 @@ export const config = {
   reservationUrl:
     "https://reservation.knps.or.kr/reservation/searchSimpleCampReservation.do",
   target: {
-    park: "치악산",
-    campground: "구룡",
+    park: "\uce58\uc545\uc0b0",
+    campground: "\uad6c\ub8e1",
     checkIn: "2026-09-04",
     checkOut: "2026-09-06",
     nights: ["2026-09-04", "2026-09-05"],
-    categories: ["카라반", "특화야영장"]
+    categories: ["\uce74\ub77c\ubc18", "\ud2b9\ud654\uc57c\uc601\uc7a5"]
   }
 };
 
 export function validateRuntimeConfig() {
   const errors = [];
-  if (!config.dashboardPassword || config.dashboardPassword.length < 12) {
-    errors.push("DASHBOARD_PASSWORD는 12자 이상으로 설정해야 합니다.");
-  }
-  if (!config.kakaoRestApiKey) errors.push("KAKAO_REST_API_KEY가 없습니다.");
-  if (!/^https?:\/\//.test(config.kakaoRedirectUri)) {
-    errors.push("KAKAO_REDIRECT_URI가 올바른 URL이 아닙니다.");
-  }
+  if (!config.kakaoRestApiKey) errors.push("KAKAO_REST_API_KEY is missing");
+  if (!config.kakaoRefreshToken) errors.push("KAKAO_REFRESH_TOKEN is missing");
   return errors;
 }

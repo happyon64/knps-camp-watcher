@@ -1,8 +1,10 @@
 import { config } from "./config.js";
 import { getState, patchState } from "./store.js";
 
+let transientKakao = null;
+
 function requireKakaoConfig() {
-  if (!config.kakaoRestApiKey) throw new Error("KAKAO_REST_API_KEY가 설정되지 않았습니다.");
+  if (!config.kakaoRestApiKey) throw new Error("KAKAO_REST_API_KEY is missing");
 }
 
 export function getAuthorizationUrl(state) {
@@ -31,7 +33,9 @@ async function requestToken(params) {
     body
   });
   const payload = await response.json();
-  if (!response.ok) throw new Error(`카카오 토큰 요청 실패: ${payload.error_description ?? payload.error}`);
+  if (!response.ok) {
+    throw new Error(`Kakao token request failed: ${payload.error_description ?? payload.error}`);
+  }
   return payload;
 }
 
@@ -52,27 +56,31 @@ export async function connectWithCode(code) {
       connectedAt: new Date(now).toISOString()
     }
   });
+  return payload;
 }
 
 async function getAccessToken() {
-  const kakao = getState().kakao;
-  if (!kakao?.refreshToken) throw new Error("카카오톡이 아직 연결되지 않았습니다.");
-  if (kakao.accessToken && Date.now() < kakao.accessTokenExpiresAt) return kakao.accessToken;
+  const useEnvironmentToken = Boolean(config.kakaoRefreshToken);
+  const saved = useEnvironmentToken ? transientKakao : getState().kakao;
+  const refreshToken = config.kakaoRefreshToken || saved?.refreshToken;
+  if (!refreshToken) throw new Error("Kakao refresh token is missing");
+  if (saved?.accessToken && Date.now() < saved.accessTokenExpiresAt) return saved.accessToken;
 
   const payload = await requestToken({
     grantType: "refresh_token",
-    extra: { refresh_token: kakao.refreshToken }
+    extra: { refresh_token: refreshToken }
   });
   const updated = {
-    ...kakao,
+    ...saved,
     accessToken: payload.access_token,
     accessTokenExpiresAt: Date.now() + payload.expires_in * 1000 - 60_000,
-    refreshToken: payload.refresh_token ?? kakao.refreshToken,
+    refreshToken: payload.refresh_token ?? refreshToken,
     refreshTokenExpiresAt: payload.refresh_token_expires_in
       ? Date.now() + payload.refresh_token_expires_in * 1000
-      : kakao.refreshTokenExpiresAt
+      : saved?.refreshTokenExpiresAt ?? null
   };
-  await patchState({ kakao: updated });
+  if (useEnvironmentToken) transientKakao = updated;
+  else await patchState({ kakao: updated });
   return updated.accessToken;
 }
 
@@ -82,7 +90,7 @@ export async function sendKakaoMessage(text, link = config.reservationUrl) {
     object_type: "text",
     text,
     link: { web_url: link, mobile_web_url: link },
-    button_title: "예약하러 가기"
+    button_title: "\uc608\uc57d\ud558\ub7ec \uac00\uae30"
   };
   const response = await fetch("https://kapi.kakao.com/v2/api/talk/memo/default/send", {
     method: "POST",
@@ -94,6 +102,6 @@ export async function sendKakaoMessage(text, link = config.reservationUrl) {
   });
   const payload = await response.json();
   if (!response.ok || payload.result_code !== 0) {
-    throw new Error(`카카오 메시지 발송 실패: ${JSON.stringify(payload)}`);
+    throw new Error(`Kakao message failed: ${JSON.stringify(payload)}`);
   }
 }
