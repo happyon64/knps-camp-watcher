@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node src/server.js",
+    "check": "node src/once.js",
     "test": "node --test"
   },
   "engines": {
