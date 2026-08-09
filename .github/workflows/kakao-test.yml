@@ -1,0 +1,31 @@
+name: Send Kakao test message
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install --omit=dev
+
+      - name: Send Kakao message
+        env:
+          KAKAO_REST_API_KEY: ${{ secrets.KAKAO_REST_API_KEY }}
+          KAKAO_CLIENT_SECRET: ${{ secrets.KAKAO_CLIENT_SECRET }}
+          KAKAO_REFRESH_TOKEN: ${{ secrets.KAKAO_REFRESH_TOKEN }}
+        run: >-
+          node --input-type=module -e
+          "import('./src/kakao.js').then(({ sendKakaoMessage }) =>
+          sendKakaoMessage('[구룡야영장 빈자리 알림] 테스트 메시지입니다.\n카카오톡 알림이 정상적으로 연결되어 있습니다.'))"
