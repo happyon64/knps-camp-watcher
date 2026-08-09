@@ -14,6 +14,7 @@ const initialState = {
     scheduleOpen: false,
     matchingFacilities: [],
     lastNotificationKey: null,
+    notificationKeys: {},
     nextCheckAt: null
   }
 };

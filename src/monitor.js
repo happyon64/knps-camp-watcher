@@ -55,12 +55,13 @@ async function scrape() {
   }
 }
 
-function availabilityMessage(matches) {
+function availabilityMessage(target, matches) {
   const list = matches.map((item) => `- ${item.category} ${item.name}`).join("\n");
+  const stayText = target.nights.length === 1 ? "1\ubc15" : `${target.nights.length}\ubc15 \uc5f0\uc18d`;
   return [
-    "[\uad6c\ub8e1\uc57c\uc601\uc7a5] 2\ubc15 \uc5f0\uc18d \ube48\uc790\ub9ac \ubc1c\uacac!",
+    `[\uad6c\ub8e1\uc57c\uc601\uc7a5] ${stayText} \ube48\uc790\ub9ac \ubc1c\uacac!`,
     "",
-    "\uc77c\uc815: 2026\ub144 9\uc6d4 4\uc77c ~ 9\uc6d4 6\uc77c (2\ubc15)",
+    `\uc77c\uc815: ${target.label}`,
     list,
     "",
     "\uc544\ub798 \ubc84\ud2bc\uc744 \ub20c\ub7ec \uacf5\uc2dd \uc608\uc57d \ud398\uc774\uc9c0\uc5d0\uc11c \uc9c1\uc811 \uc608\uc57d\ud558\uc138\uc694."
@@ -72,26 +73,48 @@ async function performRun() {
   await patchState({ monitor: { running: true, lastCheckedAt: checkedAt, lastError: null } });
   try {
     const facilities = parseFacilityRows(await scrape());
-    const result = findConsecutiveAvailability(facilities, config.target);
-    const matchingFacilities = result.matches.map((item) => `${item.category} ${item.name}`);
-    const notificationKey = matchingFacilities.slice().sort().join("|");
     const previous = getState().monitor;
+    const previousKeys = previous.notificationKeys ?? {};
+    const notificationKeys = {};
+    const targetResults = [];
 
-    if (matchingFacilities.length && notificationKey !== previous.lastNotificationKey) {
-      await sendKakaoMessage(availabilityMessage(result.matches));
+    for (const target of config.targets) {
+      const result = findConsecutiveAvailability(facilities, target);
+      const matchingFacilities = result.matches.map(
+        (item) => `${item.category} ${item.name}`
+      );
+      const notificationKey = matchingFacilities.slice().sort().join("|");
+      notificationKeys[target.id] = matchingFacilities.length ? notificationKey : null;
+      targetResults.push({ target, result, matchingFacilities });
+
+      if (matchingFacilities.length && notificationKey !== previousKeys[target.id]) {
+        await sendKakaoMessage(availabilityMessage(target, result.matches));
+      }
     }
+
+    const matchingFacilities = targetResults.flatMap(({ target, matchingFacilities }) =>
+      matchingFacilities.map((facility) => `${target.label}: ${facility}`)
+    );
+    const scheduleOpen = targetResults.some(({ result }) => result.scheduleOpen);
 
     await patchState({
       monitor: {
         running: false,
         lastSuccessAt: new Date().toISOString(),
         lastError: null,
-        scheduleOpen: result.scheduleOpen,
+        scheduleOpen,
         matchingFacilities,
-        lastNotificationKey: matchingFacilities.length ? notificationKey : null
+        lastNotificationKey: matchingFacilities.length
+          ? matchingFacilities.slice().sort().join("|")
+          : null,
+        notificationKeys
       }
     });
-    return result;
+    return {
+      scheduleOpen,
+      matches: targetResults.flatMap(({ result }) => result.matches),
+      targetResults
+    };
   } catch (error) {
     await patchState({
       monitor: { running: false, lastError: error.message ?? String(error) }

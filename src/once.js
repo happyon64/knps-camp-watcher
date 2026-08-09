@@ -12,7 +12,11 @@ console.log(
     {
       checkedAt: new Date().toISOString(),
       scheduleOpen: result.scheduleOpen,
-      matches: result.matches.map((item) => `${item.category} ${item.name}`)
+      targets: result.targetResults.map(({ target, result: targetResult }) => ({
+        id: target.id,
+        scheduleOpen: targetResult.scheduleOpen,
+        matches: targetResult.matches.map((item) => `${item.category} ${item.name}`)
+      }))
     },
     null,
     2
