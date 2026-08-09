@@ -20,14 +20,29 @@ async function scrape() {
   });
   const page = await context.newPage();
   try {
-    await page.goto(config.reservationUrl, {
+    // The visible reservation page now redirects campground clicks to login.
+    // Its availability fragment remains a public POST endpoint, so read that
+    // fragment directly instead of trying to automate a logged-in reservation.
+    const response = await context.request.post(
+      "https://reservation.knps.or.kr/reservation/campsiteList.do",
+      {
+        form: {
+          dept_id: "B101001",
+          dept_name: config.target.campground,
+          parent_dept_name: config.target.park,
+          prd_ctg_id: "",
+          isGreenpoint: "N"
+        },
+        headers: { Referer: config.reservationUrl },
+        timeout: 90_000
+      }
+    );
+    if (!response.ok()) {
+      throw new Error(`KNPS availability request failed: ${response.status()}`);
+    }
+    await page.setContent(await response.text(), {
       waitUntil: "domcontentloaded",
       timeout: 90_000
-    });
-    await page.getByRole("link", { name: new RegExp(config.target.park) }).click();
-    await page.getByRole("link", { name: config.target.campground, exact: true }).click();
-    await page.locator("table").filter({ hasText: "\uc2dc\uc124 \uc608\uc57d \ud604\ud669" }).waitFor({
-      timeout: 30_000
     });
 
     return await page.evaluate(() => {
