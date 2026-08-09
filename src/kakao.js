@@ -86,9 +86,11 @@ async function getAccessToken() {
 
 export async function sendKakaoMessage(text, link = config.reservationUrl) {
   const accessToken = await getAccessToken();
+  const linkText = `\n\n\uc608\uc57d \ub9c1\ud06c: ${link}`;
+  const messageText = `${text.slice(0, Math.max(0, 200 - linkText.length))}${linkText}`;
   const templateObject = {
     object_type: "text",
-    text,
+    text: messageText,
     link: { web_url: link, mobile_web_url: link },
     button_title: "\uc608\uc57d\ud558\ub7ec \uac00\uae30"
   };
