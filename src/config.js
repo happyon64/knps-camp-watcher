@@ -33,13 +33,13 @@ export const config = {
       id: "2026-08-22-caravan",
       label: "2026\ub144 8\uc6d4 22\uc77c ~ 8\uc6d4 23\uc77c (1\ubc15)",
       nights: ["2026-08-22"],
-      categories: ["\uce74\ub77c\ubc18"]
+      categories: ["\uce74\ub77c\ubc18", "\ud2b9\ud654\uc57c\uc601\uc7a5"]
     },
     {
       id: "2026-08-29-caravan",
       label: "2026\ub144 8\uc6d4 29\uc77c ~ 8\uc6d4 30\uc77c (1\ubc15)",
       nights: ["2026-08-29"],
-      categories: ["\uce74\ub77c\ubc18"]
+      categories: ["\uce74\ub77c\ubc18", "\ud2b9\ud654\uc57c\uc601\uc7a5"]
     },
     {
       id: "2026-09-04-two-nights",
