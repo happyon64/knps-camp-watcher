@@ -30,9 +30,15 @@ export const config = {
   },
   targets: [
     {
-      id: "2026-08-13-caravan-special",
-      label: "2026\ub144 8\uc6d4 13\uc77c ~ 8\uc6d4 14\uc77c (1\ubc15)",
-      nights: ["2026-08-13"],
+      id: "2026-08-14-caravan-special",
+      label: "2026\ub144 8\uc6d4 14\uc77c ~ 8\uc6d4 15\uc77c (1\ubc15)",
+      nights: ["2026-08-14"],
+      categories: ["\uce74\ub77c\ubc18", "\ud2b9\ud654\uc57c\uc601\uc7a5"]
+    },
+    {
+      id: "2026-08-15-caravan-special",
+      label: "2026\ub144 8\uc6d4 15\uc77c ~ 8\uc6d4 16\uc77c (1\ubc15)",
+      nights: ["2026-08-15"],
       categories: ["\uce74\ub77c\ubc18", "\ud2b9\ud654\uc57c\uc601\uc7a5"]
     },
     {
@@ -48,9 +54,9 @@ export const config = {
       categories: ["\uce74\ub77c\ubc18", "\ud2b9\ud654\uc57c\uc601\uc7a5"]
     },
     {
-      id: "2026-09-04-two-nights",
-      label: "2026\ub144 9\uc6d4 4\uc77c ~ 9\uc6d4 6\uc77c (2\ubc15)",
-      nights: ["2026-09-04", "2026-09-05"],
+      id: "2026-09-05-caravan-special",
+      label: "2026\ub144 9\uc6d4 5\uc77c ~ 9\uc6d4 6\uc77c (1\ubc15)",
+      nights: ["2026-09-05"],
       categories: ["\uce74\ub77c\ubc18", "\ud2b9\ud654\uc57c\uc601\uc7a5"]
     }
   ]
