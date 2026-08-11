@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - "android-project.zip"
+      - "android-project-fixed.zip"
       - ".github/workflows/android-apk.yml"
 
 permissions:
@@ -27,7 +27,7 @@ jobs:
           gradle-version: "8.9"
 
       - name: Unpack Android project
-        run: unzip -q android-project.zip -d android-build
+        run: unzip -q android-project-fixed.zip -d android-build
 
       - name: Build debug APK
         working-directory: android-build
