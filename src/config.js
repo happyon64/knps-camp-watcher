@@ -30,6 +30,12 @@ export const config = {
   },
   targets: [
     {
+      id: "2026-08-13-caravan-special",
+      label: "2026\ub144 8\uc6d4 13\uc77c ~ 8\uc6d4 14\uc77c (1\ubc15)",
+      nights: ["2026-08-13"],
+      categories: ["\uce74\ub77c\ubc18", "\ud2b9\ud654\uc57c\uc601\uc7a5"]
+    },
+    {
       id: "2026-08-22-caravan",
       label: "2026\ub144 8\uc6d4 22\uc77c ~ 8\uc6d4 23\uc77c (1\ubc15)",
       nights: ["2026-08-22"],
